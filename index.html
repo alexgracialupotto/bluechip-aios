@@ -550,7 +550,7 @@
 
     <div class="graphwrap">
       <span class="gcap">one brain · everything linked</span>
-      <span class="ghint">hover any node</span>
+      <span class="ghint">hover to focus · drag to move</span>
       <canvas id="graph"></canvas>
       <div class="glegend">
         <span><i style="background:#94a3b8"></i>sources</span>
@@ -762,16 +762,24 @@
       cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
     size(); window.addEventListener('resize',size);
 
-    var mx=null,my=null, hov=-1, scale=1;
+    var mx=null,my=null, hov=-1, drag=-1, scale=1;
     var host=cv.parentNode||cv;
     function setPt(cx,cy){
       var b=cv.getBoundingClientRect();
-      if(cx<b.left||cx>b.right||cy<b.top||cy>b.bottom){ mx=my=null; return; }
       mx=(cx-b.left-W/2)/scale; my=(cy-b.top-H/2)/scale;
     }
-    host.addEventListener('pointermove',function(ev){ setPt(ev.clientX,ev.clientY); },{passive:true});
-    host.addEventListener('pointerdown',function(ev){ setPt(ev.clientX,ev.clientY); },{passive:true});
-    host.addEventListener('pointerleave',function(){ mx=my=null; hov=-1; host.style.cursor='default'; });
+    host.addEventListener('pointermove',function(ev){
+      setPt(ev.clientX,ev.clientY);
+      if(drag>=0) ev.preventDefault();
+    });
+    host.addEventListener('pointerdown',function(ev){
+      setPt(ev.clientX,ev.clientY); drag=hit();
+      if(drag>=0){ host.style.cursor='grabbing'; if(cv.setPointerCapture) try{cv.setPointerCapture(ev.pointerId);}catch(e){} }
+    });
+    function release(){ drag=-1; host.style.cursor=hov>=0?'grab':'default'; }
+    window.addEventListener('pointerup',release);
+    window.addEventListener('pointercancel',release);
+    host.addEventListener('pointerleave',function(){ if(drag<0){ mx=my=null; hov=-1; host.style.cursor='default'; } });
 
     function step(){
       for(var i=0;i<N.length;i++){
@@ -782,15 +790,17 @@
           a.vx-=fx; a.vy-=fy; b.vx+=fx; b.vy+=fy;
         }
         a.vx-=a.x*0.0018; a.vy-=a.y*0.0030;
-        if(mx!==null){ var ddx=a.x-mx, ddy=a.y-my, dd=Math.sqrt(ddx*ddx+ddy*ddy)||1;
-          if(dd<95){ var pf=(95-dd)*0.020; a.vx+=ddx/dd*pf; a.vy+=ddy/dd*pf; } }
       }
       E.forEach(function(l){
         var a=N[l[0]], b=N[l[1]], dx=b.x-a.x, dy=b.y-a.y, d=Math.sqrt(dx*dx+dy*dy)||1;
         var f=(d-86)*0.0072, fx=dx/d*f, fy=dy/d*f;
         a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy;
       });
-      N.forEach(function(d){ d.vx*=0.87; d.vy*=0.87; d.x+=d.vx; d.y+=d.vy; });
+      N.forEach(function(d,i){
+        if(i===drag && mx!==null){ d.x=mx; d.y=my; d.vx=0; d.vy=0; return; }
+        if(i===hov){ d.vx*=0.55; d.vy*=0.55; }        // hovered node holds still
+        d.vx*=0.87; d.vy*=0.87; d.x+=d.vx; d.y+=d.vy;
+      });
     }
 
     function hit(){
@@ -806,7 +816,7 @@
       T+=0.016;
       ctx.clearRect(0,0,W,H);
       scale=Math.min(1,W/820);
-      hov=hit(); host.style.cursor=hov>=0?'pointer':'default';
+      hov=hit(); if(drag<0) host.style.cursor=hov>=0?'grab':'default';
       var near={};
       if(hov>=0){ near[hov]=1; (adj[hov]||[]).forEach(function(ei){ near[E[ei][0]]=1; near[E[ei][1]]=1; }); }
 
