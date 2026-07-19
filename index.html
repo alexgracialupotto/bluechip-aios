@@ -263,10 +263,10 @@
                linear-gradient(160deg,#08172c 0%,#050d1a 55%,#040a16 100%)
   }
   .graphwrap::after{
-    content:"";position:absolute;inset:0;pointer-events:none;
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
     box-shadow:inset 0 0 90px 20px rgba(4,10,22,.75)
   }
-  #graph{display:block;width:100%;height:560px;position:relative;z-index:1}
+  #graph{display:block;width:100%;height:560px;position:relative;z-index:3;pointer-events:auto;touch-action:none}
   @media(max-width:640px){#graph{height:400px}}
   .ghint{
     position:absolute;top:16px;right:20px;font-size:.72rem;color:rgba(255,255,255,.42);
@@ -526,31 +526,31 @@
         <div class="wn" style="color:#94a3b8"><span class="dot" style="background:#94a3b8"></span>sources</div>
         <h3>Where it came from</h3>
         <p>One page per document you feed it — a summary of that single thing, linked back to the untouched original.</p>
-        <span class="ex">"Summary of the supplier call"</span>
+        <span class="ex">"Sales call · Meridian", "P&amp;L · September"</span>
       </div>
       <div class="wcard">
         <div class="wn" style="color:#0e87eb"><span class="dot" style="background:#0e87eb"></span>entities</div>
         <h3>Things with names</h3>
-        <p>People, companies, products, tools. If it could wear a name badge, it's an entity.</p>
-        <span class="ex">"Northwind Ltd", "Ana Ruiz"</span>
+        <p>Clients, competitors, the people you deal with, the tools you run on. If it could wear a name badge, it's an entity.</p>
+        <span class="ex">"Meridian Group", "Sarah Chen"</span>
       </div>
       <div class="wcard">
         <div class="wn" style="color:#7cc5fb"><span class="dot" style="background:#7cc5fb"></span>concepts</div>
         <h3>Ideas and topics</h3>
-        <p>The things you can't point at — a process, a theme, a problem you keep running into.</p>
-        <span class="ex">"packaging costs", "renewal risk"</span>
+        <p>The things you can't point at — pricing, churn, runway. The problems you keep circling back to.</p>
+        <span class="ex">"pricing power", "churn", "cash runway"</span>
       </div>
       <div class="wcard">
         <div class="wn" style="color:#ffffff"><span class="dot" style="background:#fff"></span>syntheses</div>
         <h3>What you concluded</h3>
         <p>Answers built by comparing across many sources — the thinking that would otherwise die in a chat window.</p>
-        <span class="ex">"Which supplier is actually cheapest"</span>
+        <span class="ex">"Why we lost 3 deals last quarter"</span>
       </div>
     </div>
 
     <div class="graphwrap">
       <span class="gcap">one brain · everything linked</span>
-      <span class="ghint">hover a node</span>
+      <span class="ghint">hover any node</span>
       <canvas id="graph"></canvas>
       <div class="glegend">
         <span><i style="background:#94a3b8"></i>sources</span>
@@ -561,14 +561,13 @@
     </div>
 
     <div class="walk">
-      <div class="wintro">One supplier call, filed four ways:</div>
-      <div class="wl">The <b>transcript</b> is kept untouched — that's the receipt.</div>
-      <div class="wl">A <b>source</b> page summarises what that call said.</div>
-      <div class="wl">The supplier and the person you spoke to each get an <b>entity</b> page.</div>
-      <div class="wl">The subject you discussed — packaging costs — gets a <b>concept</b> page.</div>
-      <div class="wl">Later, comparing three such calls produces a <b>synthesis</b>: which supplier is actually cheapest.</div>
-      <div class="wl" style="color:var(--ink)">File that call under the supplier alone and you'll never find it when you're thinking about <b>costs</b>. Filing it in every place it belongs is what makes it findable — and what builds the web above.</div>
-    </div>
+      <div class="wintro">One sales call, filed five ways:</div>
+      <div class="wl">The <b>transcript</b> stays untouched — that's the receipt.</div>
+      <div class="wl">A <b>source</b> page captures what was actually said on that call.</div>
+      <div class="wl">The account and the buyer each get an <b>entity</b> page — every future mention lands there too.</div>
+      <div class="wl">The themes that came up — <b>pricing power</b>, <b>churn</b> — get <b>concept</b> pages.</div>
+      <div class="wl">Three months later, comparing that call against your win/loss reviews and churn survey produces a <b>synthesis</b>: why you actually lost last quarter.</div>
+      <div class="wl" style="color:var(--ink)">That last one is the point. No single call told you the answer — it only appears when the notes are connected. File the call under the account alone and the pattern stays invisible.</div>
   </div>
 </section>
 
@@ -729,25 +728,27 @@
     var C={s:'#94a3b8',e:'#0e87eb',c:'#7cc5fb',y:'#ffffff'};
 
     var N=[
-      {n:'Northwind Ltd',t:'e',r:10},{n:'Ana Ruiz',t:'e',r:6},{n:'Orbit Systems',t:'e',r:9},
-      {n:'Vendor portal',t:'e',r:5},{n:'Finance team',t:'e',r:7},{n:'Delta Packaging',t:'e',r:8},
-      {n:'Marco Lenz',t:'e',r:5},{n:'Helios Freight',t:'e',r:7},
-      {n:'packaging costs',t:'c',r:11},{n:'renewal risk',t:'c',r:8},{n:'lead times',t:'c',r:7},
-      {n:'pricing strategy',t:'c',r:10},{n:'onboarding',t:'c',r:5},{n:'supplier terms',t:'c',r:7},
-      {n:'margin pressure',t:'c',r:6},
-      {n:'Supplier call · 12 Mar',t:'s',r:5},{n:'Pricing deck v3',t:'s',r:4},{n:'Market report',t:'s',r:5},
-      {n:'Standup · 4 Apr',t:'s',r:4},{n:'Contract draft',t:'s',r:4},{n:'Vendor email',t:'s',r:4},
-      {n:'Quarterly review',t:'s',r:5},{n:'Site visit notes',t:'s',r:4},{n:'Invoice batch',t:'s',r:4},
-      {n:'Renewal thread',t:'s',r:4},{n:'Logistics quote',t:'s',r:4},
-      {n:'Which supplier is cheapest',t:'y',r:12},{n:'Why renewals slipped',t:'y',r:11},
-      {n:'Where margin leaks',t:'y',r:10}
+      {n:'Meridian Group',t:'e',r:10},{n:'Sarah Chen',t:'e',r:6},{n:'Vertex Labs',t:'e',r:9},
+      {n:'Acme Retail',t:'e',r:8},{n:'the sales team',t:'e',r:7},{n:'Stripe',t:'e',r:5},
+      {n:'Tom Okafor',t:'e',r:5},{n:'Halcyon Partners',t:'e',r:7},
+      {n:'pricing power',t:'c',r:11},{n:'churn',t:'c',r:11},{n:'cash runway',t:'c',r:9},
+      {n:'sales pipeline',t:'c',r:10},{n:'hiring plan',t:'c',r:7},{n:'unit economics',t:'c',r:8},
+      {n:'onboarding friction',t:'c',r:7},
+      {n:'Board deck · Q3',t:'s',r:5},{n:'Sales call · Meridian',t:'s',r:5},{n:'Customer interview',t:'s',r:5},
+      {n:'P&L · September',t:'s',r:5},{n:'Churn survey',t:'s',r:4},{n:'Competitor pricing page',t:'s',r:4},
+      {n:'1:1 notes · Tom',t:'s',r:4},{n:'Win/loss review',t:'s',r:5},{n:'Investor update',t:'s',r:4},
+      {n:'Support tickets',t:'s',r:4},{n:'Renewal thread',t:'s',r:4},
+      {n:'Why we lost 3 deals last quarter',t:'y',r:12},
+      {n:'What is actually driving churn',t:'y',r:12},
+      {n:'Which channel really converts',t:'y',r:10}
     ];
-    var E=[[15,0],[15,1],[15,8],[16,11],[16,0],[17,8],[17,10],[18,4],[18,9],[19,0],[19,13],
-      [20,2],[20,9],[21,10],[21,3],[22,5],[22,10],[23,4],[23,14],[24,9],[24,7],[25,7],[25,10],
-      [0,8],[0,13],[1,0],[2,9],[2,11],[3,12],[4,11],[5,8],[5,10],[6,2],[7,10],[7,14],
-      [26,0],[26,4],[26,8],[26,13],[26,15],[26,5],[27,2],[27,9],[27,20],[27,11],[27,24],
-      [28,14],[28,11],[28,8],[28,4],[28,23],
-      [8,10],[9,13],[11,8],[12,3],[10,5],[14,11],[13,0]];
+    var E=[[15,10],[15,13],[15,8],[16,0],[16,11],[17,14],[17,9],[18,10],[18,13],[19,9],[19,14],
+      [20,2],[20,8],[21,12],[21,4],[22,11],[22,8],[23,10],[23,13],[24,14],[24,9],[25,0],[25,9],
+      [0,11],[0,8],[1,0],[2,8],[2,11],[3,9],[4,11],[5,13],[6,4],[7,11],[7,8],
+      [26,2],[26,11],[26,8],[26,16],[26,22],[26,1],
+      [27,9],[27,14],[27,19],[27,3],[27,25],
+      [28,11],[28,4],[28,12],[28,21],
+      [8,13],[9,14],[11,12],[10,13],[12,4],[9,0],[8,2]];
 
     var adj={}; E.forEach(function(l,i){ (adj[l[0]]=adj[l[0]]||[]).push(i); (adj[l[1]]=adj[l[1]]||[]).push(i); });
     N.forEach(function(d,i){
@@ -762,11 +763,15 @@
     size(); window.addEventListener('resize',size);
 
     var mx=null,my=null, hov=-1, scale=1;
-    cv.addEventListener('mousemove',function(ev){
+    var host=cv.parentNode||cv;
+    function setPt(cx,cy){
       var b=cv.getBoundingClientRect();
-      mx=(ev.clientX-b.left-W/2)/scale; my=(ev.clientY-b.top-H/2)/scale;
-    });
-    cv.addEventListener('mouseleave',function(){ mx=my=null; hov=-1; cv.style.cursor='default'; });
+      if(cx<b.left||cx>b.right||cy<b.top||cy>b.bottom){ mx=my=null; return; }
+      mx=(cx-b.left-W/2)/scale; my=(cy-b.top-H/2)/scale;
+    }
+    host.addEventListener('pointermove',function(ev){ setPt(ev.clientX,ev.clientY); },{passive:true});
+    host.addEventListener('pointerdown',function(ev){ setPt(ev.clientX,ev.clientY); },{passive:true});
+    host.addEventListener('pointerleave',function(){ mx=my=null; hov=-1; host.style.cursor='default'; });
 
     function step(){
       for(var i=0;i<N.length;i++){
@@ -792,7 +797,7 @@
       if(mx===null) return -1;
       var best=-1,bd=1e9;
       N.forEach(function(d,i){ var dx=d.x-mx,dy=d.y-my,dd=dx*dx+dy*dy;
-        if(dd<bd&&dd<(d.r+13)*(d.r+13)){bd=dd;best=i;} });
+        if(dd<bd&&dd<(d.r+26)*(d.r+26)){bd=dd;best=i;} });
       return best;
     }
 
@@ -801,7 +806,7 @@
       T+=0.016;
       ctx.clearRect(0,0,W,H);
       scale=Math.min(1,W/820);
-      hov=hit(); cv.style.cursor=hov>=0?'pointer':'default';
+      hov=hit(); host.style.cursor=hov>=0?'pointer':'default';
       var near={};
       if(hov>=0){ near[hov]=1; (adj[hov]||[]).forEach(function(ei){ near[E[ei][0]]=1; near[E[ei][1]]=1; }); }
 
