@@ -256,19 +256,31 @@
   .wcard p{font-size:.87rem;color:var(--ink-muted);line-height:1.5}
   .wcard .ex{display:block;margin-top:10px;font-size:.8rem;color:var(--ink-subtle);font-style:italic}
   .graphwrap{
-    margin-top:40px;border:1px solid var(--line);border-radius:16px;overflow:hidden;
-    background:var(--band);position:relative;box-shadow:var(--shadow-soft)
+    margin-top:40px;border:1px solid var(--line-strong);border-radius:18px;overflow:hidden;
+    position:relative;box-shadow:0 24px 70px rgba(7,37,74,.28);
+    background:radial-gradient(ellipse 70% 80% at 50% 45%,#0d2748 0%,transparent 70%),
+               radial-gradient(ellipse 60% 70% at 50% 50%,rgba(0,102,204,.20) 0%,transparent 65%),
+               linear-gradient(160deg,#08172c 0%,#050d1a 55%,#040a16 100%)
   }
-  #graph{display:block;width:100%;height:440px}
-  @media(max-width:640px){#graph{height:340px}}
+  .graphwrap::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    box-shadow:inset 0 0 90px 20px rgba(4,10,22,.75)
+  }
+  #graph{display:block;width:100%;height:560px;position:relative;z-index:1}
+  @media(max-width:640px){#graph{height:400px}}
+  .ghint{
+    position:absolute;top:16px;right:20px;font-size:.72rem;color:rgba(255,255,255,.42);
+    font-family:var(--font-mono);letter-spacing:.02em;pointer-events:none;z-index:2
+  }
+  @media(max-width:640px){.ghint{display:none}}
   .glegend{
-    display:flex;gap:20px;flex-wrap:wrap;padding:14px 20px;
+    position:relative;z-index:2;display:flex;gap:20px;flex-wrap:wrap;padding:14px 20px;
     border-top:1px solid var(--band-line);background:rgba(0,0,0,.25)
   }
   .glegend span{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;color:rgba(255,255,255,.72)}
   .glegend i{width:9px;height:9px;border-radius:50%;display:inline-block}
   .gcap{
-    position:absolute;top:16px;left:20px;font-size:.76rem;color:rgba(255,255,255,.5);
+    position:absolute;top:16px;left:20px;z-index:2;font-size:.76rem;color:rgba(255,255,255,.5);
     font-family:var(--font-mono);letter-spacing:.02em;pointer-events:none
   }
   .walk{
@@ -538,6 +550,7 @@
 
     <div class="graphwrap">
       <span class="gcap">one brain · everything linked</span>
+      <span class="ghint">hover a node</span>
       <canvas id="graph"></canvas>
       <div class="glegend">
         <span><i style="background:#94a3b8"></i>sources</span>
@@ -709,84 +722,156 @@
   })();
 
 
-  /* ---- knowledge graph (illustrative data, force-directed, canvas) ---- */
+  /* ---- knowledge graph — illustrative data, force-directed, canvas ---- */
   (function(){
     var cv=document.getElementById('graph'); if(!cv) return;
-    var ctx=cv.getContext('2d'), W=0, H=0, DPR=Math.min(window.devicePixelRatio||1,2);
+    var ctx=cv.getContext('2d'), W=0,H=0, DPR=Math.min(window.devicePixelRatio||1,2);
     var C={s:'#94a3b8',e:'#0e87eb',c:'#7cc5fb',y:'#ffffff'};
 
     var N=[
-      {n:'Northwind Ltd',t:'e',r:9},{n:'Ana Ruiz',t:'e',r:6},{n:'Orbit Systems',t:'e',r:8},
-      {n:'Vendor portal',t:'e',r:5},{n:'Finance team',t:'e',r:6},{n:'Delta Packaging',t:'e',r:7},
-      {n:'packaging costs',t:'c',r:9},{n:'renewal risk',t:'c',r:7},{n:'lead times',t:'c',r:6},
-      {n:'pricing strategy',t:'c',r:8},{n:'onboarding',t:'c',r:5},{n:'supplier terms',t:'c',r:6},
+      {n:'Northwind Ltd',t:'e',r:10},{n:'Ana Ruiz',t:'e',r:6},{n:'Orbit Systems',t:'e',r:9},
+      {n:'Vendor portal',t:'e',r:5},{n:'Finance team',t:'e',r:7},{n:'Delta Packaging',t:'e',r:8},
+      {n:'Marco Lenz',t:'e',r:5},{n:'Helios Freight',t:'e',r:7},
+      {n:'packaging costs',t:'c',r:11},{n:'renewal risk',t:'c',r:8},{n:'lead times',t:'c',r:7},
+      {n:'pricing strategy',t:'c',r:10},{n:'onboarding',t:'c',r:5},{n:'supplier terms',t:'c',r:7},
+      {n:'margin pressure',t:'c',r:6},
       {n:'Supplier call · 12 Mar',t:'s',r:5},{n:'Pricing deck v3',t:'s',r:4},{n:'Market report',t:'s',r:5},
       {n:'Standup · 4 Apr',t:'s',r:4},{n:'Contract draft',t:'s',r:4},{n:'Vendor email',t:'s',r:4},
-      {n:'Quarterly review',t:'s',r:4},{n:'Site visit notes',t:'s',r:4},
-      {n:'Which supplier is cheapest',t:'y',r:10},{n:'Why renewals slipped',t:'y',r:9}
+      {n:'Quarterly review',t:'s',r:5},{n:'Site visit notes',t:'s',r:4},{n:'Invoice batch',t:'s',r:4},
+      {n:'Renewal thread',t:'s',r:4},{n:'Logistics quote',t:'s',r:4},
+      {n:'Which supplier is cheapest',t:'y',r:12},{n:'Why renewals slipped',t:'y',r:11},
+      {n:'Where margin leaks',t:'y',r:10}
     ];
-    var E=[[12,0],[12,1],[12,6],[13,9],[13,0],[14,6],[14,8],[15,4],[15,7],[16,0],[16,11],
-      [17,2],[17,7],[18,9],[18,3],[19,5],[19,8],[0,6],[0,11],[1,0],[2,7],[2,9],[3,10],
-      [4,9],[5,6],[5,8],[20,0],[20,5],[20,6],[20,11],[20,12],[21,2],[21,7],[21,17],[21,9],
-      [6,8],[7,11],[9,6],[10,3],[8,5]];
+    var E=[[15,0],[15,1],[15,8],[16,11],[16,0],[17,8],[17,10],[18,4],[18,9],[19,0],[19,13],
+      [20,2],[20,9],[21,10],[21,3],[22,5],[22,10],[23,4],[23,14],[24,9],[24,7],[25,7],[25,10],
+      [0,8],[0,13],[1,0],[2,9],[2,11],[3,12],[4,11],[5,8],[5,10],[6,2],[7,10],[7,14],
+      [26,0],[26,4],[26,8],[26,13],[26,15],[26,5],[27,2],[27,9],[27,20],[27,11],[27,24],
+      [28,14],[28,11],[28,8],[28,4],[28,23],
+      [8,10],[9,13],[11,8],[12,3],[10,5],[14,11],[13,0]];
 
-    N.forEach(function(d,i){ d.x=Math.random()*400-200; d.y=Math.random()*300-150; d.vx=0; d.vy=0; });
+    var adj={}; E.forEach(function(l,i){ (adj[l[0]]=adj[l[0]]||[]).push(i); (adj[l[1]]=adj[l[1]]||[]).push(i); });
+    N.forEach(function(d,i){
+      var a=i/N.length*6.283;
+      d.x=Math.cos(a)*(120+Math.random()*90); d.y=Math.sin(a)*(90+Math.random()*70);
+      d.vx=0; d.vy=0; d.ap=0; d.dl=Math.random()*0.55; d.ph=Math.random()*6.283; d.hi=0;
+    });
+    var P=E.map(function(){ return {t:Math.random(), sp:0.0016+Math.random()*0.0026}; });
 
-    function size(){
-      var b=cv.getBoundingClientRect(); W=b.width; H=b.height;
-      cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
-    }
+    function size(){ var b=cv.getBoundingClientRect(); W=b.width; H=b.height;
+      cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
     size(); window.addEventListener('resize',size);
+
+    var mx=null,my=null, hov=-1, scale=1;
+    cv.addEventListener('mousemove',function(ev){
+      var b=cv.getBoundingClientRect();
+      mx=(ev.clientX-b.left-W/2)/scale; my=(ev.clientY-b.top-H/2)/scale;
+    });
+    cv.addEventListener('mouseleave',function(){ mx=my=null; hov=-1; cv.style.cursor='default'; });
 
     function step(){
       for(var i=0;i<N.length;i++){
         var a=N[i];
         for(var j=i+1;j<N.length;j++){
-          var b=N[j], dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy||1, d=Math.sqrt(d2);
-          var f=900/d2; if(d<1) d=1;
-          var fx=dx/d*f, fy=dy/d*f;
+          var b=N[j], dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy||1, d=Math.sqrt(d2)||1;
+          var f=1150/d2, fx=dx/d*f, fy=dy/d*f;
           a.vx-=fx; a.vy-=fy; b.vx+=fx; b.vy+=fy;
         }
-        a.vx-=a.x*0.0016; a.vy-=a.y*0.0026;
+        a.vx-=a.x*0.0018; a.vy-=a.y*0.0030;
+        if(mx!==null){ var ddx=a.x-mx, ddy=a.y-my, dd=Math.sqrt(ddx*ddx+ddy*ddy)||1;
+          if(dd<95){ var pf=(95-dd)*0.020; a.vx+=ddx/dd*pf; a.vy+=ddy/dd*pf; } }
       }
       E.forEach(function(l){
         var a=N[l[0]], b=N[l[1]], dx=b.x-a.x, dy=b.y-a.y, d=Math.sqrt(dx*dx+dy*dy)||1;
-        var f=(d-78)*0.0075, fx=dx/d*f, fy=dy/d*f;
+        var f=(d-86)*0.0072, fx=dx/d*f, fy=dy/d*f;
         a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy;
       });
-      N.forEach(function(d){ d.vx*=0.86; d.vy*=0.86; d.x+=d.vx; d.y+=d.vy; });
+      N.forEach(function(d){ d.vx*=0.87; d.vy*=0.87; d.x+=d.vx; d.y+=d.vy; });
     }
 
+    function hit(){
+      if(mx===null) return -1;
+      var best=-1,bd=1e9;
+      N.forEach(function(d,i){ var dx=d.x-mx,dy=d.y-my,dd=dx*dx+dy*dy;
+        if(dd<bd&&dd<(d.r+13)*(d.r+13)){bd=dd;best=i;} });
+      return best;
+    }
+
+    var T=0;
     function draw(){
+      T+=0.016;
       ctx.clearRect(0,0,W,H);
-      var cx=W/2, cy=H/2, s=Math.min(1,W/760);
-      ctx.save(); ctx.translate(cx,cy); ctx.scale(s,s);
-      ctx.lineWidth=1;
-      E.forEach(function(l){
+      scale=Math.min(1,W/820);
+      hov=hit(); cv.style.cursor=hov>=0?'pointer':'default';
+      var near={};
+      if(hov>=0){ near[hov]=1; (adj[hov]||[]).forEach(function(ei){ near[E[ei][0]]=1; near[E[ei][1]]=1; }); }
+
+      ctx.save(); ctx.translate(W/2,H/2); ctx.scale(scale,scale);
+
+      E.forEach(function(l,i){
         var a=N[l[0]], b=N[l[1]];
+        var on=hov<0||(near[l[0]]&&near[l[1]]);
+        var ap=Math.min(a.ap,b.ap); if(ap<=0.02) return;
+        var al=(on?1:0.13)*ap;
         var g=ctx.createLinearGradient(a.x,a.y,b.x,b.y);
-        g.addColorStop(0,'rgba(124,197,251,0.30)'); g.addColorStop(1,'rgba(14,135,235,0.16)');
-        ctx.strokeStyle=g; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+        g.addColorStop(0,'rgba(124,197,251,'+(0.34*al)+')');
+        g.addColorStop(1,'rgba(14,135,235,'+(0.18*al)+')');
+        ctx.strokeStyle=g; ctx.lineWidth=on&&hov>=0?1.5:1;
+        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+
+        // travelling pulse — knowledge moving between pages
+        var pl=P[i]; pl.t+=pl.sp; if(pl.t>1) pl.t-=1;
+        var px=a.x+(b.x-a.x)*pl.t, py=a.y+(b.y-a.y)*pl.t;
+        ctx.globalAlpha=al*(0.85-Math.abs(pl.t-0.5)*0.9);
+        ctx.fillStyle='#bfe3ff'; ctx.beginPath(); ctx.arc(px,py,1.7,0,6.284); ctx.fill();
+        ctx.globalAlpha=1;
       });
-      N.forEach(function(d){
-        ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,6.284);
-        ctx.fillStyle=C[d.t]; ctx.globalAlpha=d.t==='y'?0.96:0.9; ctx.fill(); ctx.globalAlpha=1;
-        if(d.r>=7||d.t==='y'){
-          ctx.font='500 11px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
-          ctx.fillStyle='rgba(255,255,255,0.80)'; ctx.textAlign='center';
-          ctx.fillText(d.n,d.x,d.y+d.r+13);
+
+      N.forEach(function(d,i){
+        if(d.ap<=0.01) return;
+        var on=hov<0||near[i];
+        d.hi+=(((hov===i)?1:0)-d.hi)*0.15;
+        var al=(on?1:0.16)*d.ap;
+        var rr=(d.r+Math.sin(T*1.1+d.ph)*0.6)*(0.85+0.15*d.ap)*(1+d.hi*0.35);
+
+        var gl=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,rr*4.2);
+        gl.addColorStop(0,C[d.t]); gl.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.globalAlpha=al*(0.20+d.hi*0.30); ctx.fillStyle=gl;
+        ctx.beginPath(); ctx.arc(d.x,d.y,rr*4.2,0,6.284); ctx.fill();
+
+        ctx.globalAlpha=al*(d.t==='y'?0.98:0.92); ctx.fillStyle=C[d.t];
+        ctx.beginPath(); ctx.arc(d.x,d.y,rr,0,6.284); ctx.fill();
+        ctx.globalAlpha=al*0.5; ctx.strokeStyle='rgba(255,255,255,0.65)'; ctx.lineWidth=0.8;
+        ctx.beginPath(); ctx.arc(d.x,d.y,rr,0,6.284); ctx.stroke();
+        ctx.globalAlpha=1;
+
+        var show=(d.r>=8||d.t==='y'||hov===i||(hov>=0&&near[i]));
+        if(show){
+          ctx.font=(hov===i?'600 ':'500 ')+'11.5px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
+          ctx.textAlign='center';
+          ctx.globalAlpha=al*(hov===i?1:0.82);
+          ctx.fillStyle='rgba(255,255,255,'+(hov===i?1:0.86)+')';
+          ctx.fillText(d.n,d.x,d.y+rr+14); ctx.globalAlpha=1;
         }
       });
       ctx.restore();
     }
 
     var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    for(var k=0;k<340;k++) step();          // settle before first paint
-    draw();
-    if(!reduce){
-      var frames=0;
-      (function loop(){ if(frames++>900) return; step(); draw(); requestAnimationFrame(loop); })();
+    for(var k=0;k<420;k++) step();
+    var started=false, t0=0;
+    function loop(ts){
+      if(!t0) t0=ts;
+      var el=(ts-t0)/1000;
+      N.forEach(function(d){ var p=(el-d.dl*1.5)/1.1; d.ap=p<=0?0:(p>=1?1:1-Math.pow(1-p,3)); });
+      step(); draw(); requestAnimationFrame(loop);
     }
+    function begin(){ if(started) return; started=true;
+      if(reduce){ N.forEach(function(d){ d.ap=1; }); draw(); return; }
+      requestAnimationFrame(loop);
+    }
+    if('IntersectionObserver' in window){
+      new IntersectionObserver(function(en,o){ en.forEach(function(e){ if(e.isIntersecting){ begin(); o.disconnect(); } }); },{threshold:0.25}).observe(cv);
+    } else begin();
   })();
 
   (function(){
